@@ -2,10 +2,19 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     element = createObject("roSGNode", tagName)
 
     if (fields <> invalid)
+        ' Handle ref field, which makes element available to context.
         if (fields["ref"] <> invalid)
-            m[fields["ref"]] = element
+            ' Use the passed in context, defaulting to calling context.
+            if (fields["context"] <> invalid)
+                context = fields["context"]
+            else
+                context = m
+            end if
+
+            context[fields["ref"]] = element
 
             fields.delete("ref")
+            fields.delete("context")
         end if
 
         element.setFields(fields)
@@ -20,6 +29,7 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     return element
 end function
 
+' TODO: get parent.el for components.
 sub mount(parent as object, child as object, insertIndex = invalid as object)
     ' If child is a poo, it is one of our components.
     if (type(child) = "roAssociativeArray")
@@ -28,10 +38,16 @@ sub mount(parent as object, child as object, insertIndex = invalid as object)
         childEl = child
     end if
 
-    if (insertIndex <> invalid)
-        parent.insertChild(childEl, insertIndex)
-    else
-        parent.appendChild(childEl)
+    if (type(childEl) = "roSGNode")
+        if (insertIndex <> invalid)
+            parent.insertChild(childEl, insertIndex)
+        else
+            parent.appendChild(childEl)
+        end if
+    else if (type(childEl) = "roArray")
+        for i = 0 to childEl.count() - 1
+            mount(parent, childEl[i])
+        end for
     end if
 end sub
 
@@ -43,9 +59,8 @@ sub setChildren(parent, children)
         parentEl = parent
     end if
 
-    ' TODO: This works, but I'm surprised. Refactor t to be clearer.
-    t = 0
-    traverse = parentEl.getChild(t)
+    currentIndex = 0
+    current = parentEl.getChild(currentIndex)
 
     for i = 0 to children.count() - 1
         child = children[i]
@@ -57,20 +72,25 @@ sub setChildren(parent, children)
             childEl = child
         end if
 
-        if (childEl.isSameNode(traverse))
-            traverse = parentEl.getChild(t + 1)
-        else
-            mount(parentEl, childEl, t)
-            t++
+        if (not childEl.isSameNode(current))
+            ' Insert the child at the current index.
+            mount(parentEl, childEl, currentIndex)
         end if
+
+        currentIndex++
+        current = parentEl.getChild(currentIndex)
     end for
 
     ' Remove remaining children from parent.
-    while (traverse <> invalid)
-        nextChild = parent.getChild(t + 1)
+    while (current <> invalid)
+        currentIndex++
+        ' Cache reference to next child.
+        nextChild = parent.getChild(currentIndex)
 
-        parent.removeChild(traverse)
+        ' Remove current.
+        parent.removeChild(current)
 
-        traverse = nextChild
+        ' Update current to next child to end the loop or remove it on the next pass.
+        current = nextChild
     end while
 end sub
