@@ -29,8 +29,14 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     return element
 end function
 
-' TODO: get parent.el for components.
 sub mount(parent as object, child as object, insertIndex = invalid as object)
+    ' If child is a poo, it is one of our components.
+    if (type(parent) = "roAssociativeArray")
+        parentEl = parent.el
+    else
+        parentEl = parent
+    end if
+
     ' If child is a poo, it is one of our components.
     if (type(child) = "roAssociativeArray")
         childEl = child.el
@@ -40,13 +46,13 @@ sub mount(parent as object, child as object, insertIndex = invalid as object)
 
     if (type(childEl) = "roSGNode")
         if (insertIndex <> invalid)
-            parent.insertChild(childEl, insertIndex)
+            parentEl.insertChild(childEl, insertIndex)
         else
-            parent.appendChild(childEl)
+            parentEl.appendChild(childEl)
         end if
     else if (type(childEl) = "roArray")
         for i = 0 to childEl.count() - 1
-            mount(parent, childEl[i])
+            mount(parentEl, childEl[i])
         end for
     end if
 end sub
@@ -88,7 +94,7 @@ sub setChildren(parent, children)
         nextChild = parent.getChild(currentIndex)
 
         ' Remove current.
-        parent.removeChild(current)
+        parentEl.removeChild(current)
 
         ' Update current to next child to end the loop or remove it on the next pass.
         current = nextChild

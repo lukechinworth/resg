@@ -1,2 +1,2 @@
 # RE:SG
-RE:DOM for ROku SceneGraph.
+RE:DOM for Roku SceneGraph.
