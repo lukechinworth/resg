@@ -25,7 +25,6 @@ sub init()
     mount(m.layoutGoup, m.listContainer)
 
     m.cardData = []
-    m.cardList = []
 
     for i = 0 to 50 - 1
         width = 75 + rnd(75)
@@ -39,26 +38,23 @@ sub init()
             },
             name: "Image " + (i + 1).toStr()
         }
-        m.cardList[i] = Card().init()
-        m.cardList[i].update(m.cardData[i])
     end for
 
-    ' TODO: implement the list helper.
-    ' m.cardList = list(Card)
-
-    mount(m.layoutGoup, m.cardList)
+    m.cardList = list(Card)
+    m.cardList.update(m.cardData)
+    mount(m.layoutGoup, el("LayoutGroup", invalid, m.cardList))
 
     m.timer = el("Timer")
-    m.timer.duration = 2
+    m.timer.duration = 1 / 60
+    m.timer.repeat = true
     m.timer.observeFieldScoped("fire", "onFireTimer")
+
     m.timer.control = "start"
 end sub
 
 sub onFireTimer()
-    m.listItems.reverse()
-    m.listItems.pop()
-    m.listItems.pop()
-    setChildren(m.list, m.listItems)
+    m.cardData.reverse()
+    m.cardList.update(m.cardData)
 end sub
 
 '

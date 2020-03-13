@@ -21,6 +21,10 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     end if
 
     if (children <> invalid)
+        if (not type(children) = "roArray")
+            children = [children]
+        end if
+
         for i = 0 to children.count() - 1
             mount(element, children[i])
         end for
@@ -29,16 +33,51 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     return element
 end function
 
+' TODO: update to include parent as first arg.
+' TODO: add key to args to maintain item state.
+function list(View as function)
+    return {
+        __resg_is_list: true,
+        View: View,
+        views: [],
+        update: sub(datas)
+            ' We use a temp views array so that it has the same length as the new data coming in.
+            views = []
+
+            for i = 0 to datas.count() - 1
+                data = datas[i]
+                ' Check if view is in local cache.
+                view = m.views[i]
+
+                if (view = invalid)
+                    view = m.View().init()
+                end if
+
+                views[i] = view
+
+                if (view.update <> invalid)
+                    view.update(data)
+                end if
+            end for
+
+            ' m.parent is set on the list in mount().
+            if (m.parent <> invalid)
+                setChildren(m.parent, views)
+            end if
+
+            m.views = views
+        end sub
+    }
+end function
+
 sub mount(parent as object, child as object, insertIndex = invalid as object)
-    ' If child is a poo, it is one of our components.
-    if (type(parent) = "roAssociativeArray")
+    if (type(parent) = "roAssociativeArray" and parent.el <> invalid)
         parentEl = parent.el
     else
         parentEl = parent
     end if
 
-    ' If child is a poo, it is one of our components.
-    if (type(child) = "roAssociativeArray")
+    if (type(child) = "roAssociativeArray" and child.el <> invalid)
         childEl = child.el
     else
         childEl = child
@@ -54,12 +93,15 @@ sub mount(parent as object, child as object, insertIndex = invalid as object)
         for i = 0 to childEl.count() - 1
             mount(parentEl, childEl[i])
         end for
+    else if (childEl.__resg_is_list)
+        ' TODO: update when we add parent to list args.
+        childEl.parent = parentEl
+        mount(parentEl, childEl.views)
     end if
 end sub
 
 sub setChildren(parent, children)
-    ' If parent is a poo, it is one of our components.
-    if (type(parent) = "roAssociativeArray")
+    if (type(parent) = "roAssociativeArray" and parent.el <> invalid)
         parentEl = parent.el
     else
         parentEl = parent
@@ -71,8 +113,7 @@ sub setChildren(parent, children)
     for i = 0 to children.count() - 1
         child = children[i]
 
-        ' If child is a poo, it is one of our components.
-        if (type(child) = "roAssociativeArray")
+        if (type(child) = "roAssociativeArray" and child.el <> invalid)
             childEl = child.el
         else
             childEl = child
