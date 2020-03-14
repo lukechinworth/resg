@@ -42,10 +42,10 @@ sub init()
 
     m.cardList = list(Card)
     m.cardList.update(m.cardData)
-    mount(m.layoutGoup, el("LayoutGroup", invalid, m.cardList))
+    mount(m.layoutGoup, el("Group", { ref: "listContainer", on: { change: "onChangeListContainer" } }, m.cardList))
 
     m.timer = el("Timer")
-    m.timer.duration = 1 / 60
+    m.timer.duration = 1
     m.timer.repeat = true
     m.timer.observeFieldScoped("fire", "onFireTimer")
 
@@ -53,8 +53,37 @@ sub init()
 end sub
 
 sub onFireTimer()
-    m.cardData.reverse()
-    m.cardList.update(m.cardData)
+    m.cardData = sortRandom(m.cardData)
+    ' m.cardData.reverse()
+    ' TODO: this is leaving some extra children in the parent when the list is sliced smaller.
+    m.cardList.update(slice(m.cardData, 0, rnd(25)))
+end sub
+
+sub onChangeListContainer(e as object)
+    change = e.getData()
+
+    newIndex = invalid
+
+    if (change.operation = "move")
+        newIndex = change.index2
+    else if (change.operation = "add" or change.operation = "insert")
+        newIndex = change.index1
+    end if
+
+    if (newIndex = invalid)
+        return
+    end if
+
+    SCREEN_WIDTH = 1920
+    CARD_WIDTH = 150
+    CARD_HEIGHT = 170
+    cardsPerRow = SCREEN_WIDTH \ CARD_WIDTH
+    x = newIndex MOD cardsPerRow
+    y = newIndex \ cardsPerRow
+
+    listContainer = e.getRoSGNode()
+    child = listContainer.getChild(newIndex)
+    child.translation = [x * CARD_WIDTH, y * CARD_HEIGHT]
 end sub
 
 '
@@ -86,3 +115,41 @@ function Card() as object
         end sub,
     }
 end function
+
+function slice(array, begin = 0, endIndex = invalid)
+    newArray = []
+
+    if (endIndex = invalid)
+        endIndex = array.count() - 1
+    end if
+
+    for i = begin to endIndex
+        newArray[i] = array[i]
+    end for
+
+    return newArray
+end function
+
+function sortRandom(array)
+    itemsWithRandomNumber = []
+    count = array.count()
+
+    for i = 0 to count - 1
+        itemsWithRandomNumber.push({
+            sortKey: rnd(count),
+            i: i
+            items: array[i],
+        })
+    end for
+
+    itemsWithRandomNumber.sortBy("sortKey")
+
+    newArray = []
+
+    for i = 0 to count - 1
+        newArray.push(array[itemsWithRandomNumber[i].i])
+    end for
+
+    return newArray
+end function
+

@@ -2,20 +2,33 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     element = createObject("roSGNode", tagName)
 
     if (fields <> invalid)
-        ' Handle ref field, which makes element available to context.
-        if (fields["ref"] <> invalid)
-            ' Use the passed in context, defaulting to calling context.
-            if (fields["context"] <> invalid)
-                context = fields["context"]
-            else
-                context = m
-            end if
-
-            context[fields["ref"]] = element
-
-            fields.delete("ref")
-            fields.delete("context")
+        ' Use the passed in context, defaulting to calling context.
+        if (fields.context <> invalid)
+            context = fields.context
+        else
+            context = m
         end if
+
+        ' Handle ref field, which makes element available to context.
+        if (fields.ref <> invalid)
+            context[fields.ref] = element
+        end if
+
+        ' Handle on field, which adds event listeners.
+        if (fields.on <> invalid)
+            items = fields.on.items()
+
+            for i = 0 to items.count() - 1
+                item = items[i]
+
+                ' TODO: see if this works or if we need to observe from context.ref
+                element.observeFieldScoped(item.key, item.value)
+            end for
+        end if
+
+        fields.delete("on")
+        fields.delete("ref")
+        fields.delete("context")
 
         element.setFields(fields)
     end if
@@ -56,6 +69,7 @@ function list(View as function)
                 views[i] = view
 
                 if (view.update <> invalid)
+                    ' TODO: add other args here.
                     view.update(data)
                 end if
             end for
@@ -132,7 +146,7 @@ sub setChildren(parent, children)
     while (current <> invalid)
         currentIndex++
         ' Cache reference to next child.
-        nextChild = parent.getChild(currentIndex)
+        nextChild = parentEl.getChild(currentIndex)
 
         ' Remove current.
         parentEl.removeChild(current)
