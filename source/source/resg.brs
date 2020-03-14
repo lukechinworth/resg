@@ -144,14 +144,9 @@ sub setChildren(parent, children)
 
     ' Remove remaining children from parent.
     while (current <> invalid)
-        currentIndex++
-        ' Cache reference to next child.
-        nextChild = parentEl.getChild(currentIndex)
-
-        ' Remove current.
         parentEl.removeChild(current)
 
-        ' Update current to next child to end the loop or remove it on the next pass.
-        current = nextChild
+        ' Since we just removed, the remaining children will slide back one, so we can get the next at the same index.
+        current = parentEl.getChild(currentIndex)
     end while
 end sub

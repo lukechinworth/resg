@@ -4,7 +4,7 @@ sub init()
     mount(m.top, m.layoutGoup)
 
     m.labels = [
-        el("Label", { text: "Hello re:sg" }),
+        el("Label", { text: "Hello RE:SG" }),
         el("Label", { text: "Here is a label." }),
     ]
 
@@ -42,6 +42,7 @@ sub init()
 
     m.cardList = list(Card)
     m.cardList.update(m.cardData)
+    ' TODO: is there a better way to add/remove field observers?
     mount(m.layoutGoup, el("Group", { ref: "listContainer", on: { change: "onChangeListContainer" } }, m.cardList))
 
     m.timer = el("Timer")
@@ -54,9 +55,8 @@ end sub
 
 sub onFireTimer()
     m.cardData = sortRandom(m.cardData)
-    ' m.cardData.reverse()
-    ' TODO: this is leaving some extra children in the parent when the list is sliced smaller.
-    m.cardList.update(slice(m.cardData, 0, rnd(25)))
+    cardDataRandomSlice = slice(m.cardData, 0, rnd(50 - 1))
+    m.cardList.update(cardDataRandomSlice)
 end sub
 
 sub onChangeListContainer(e as object)
@@ -116,6 +116,7 @@ function Card() as object
     }
 end function
 
+' TODO: add more checks to not get invalid values.
 function slice(array, begin = 0, endIndex = invalid)
     newArray = []
 
