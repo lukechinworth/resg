@@ -1,3 +1,6 @@
+'
+' Core functions: el, list, mount, setChildren
+'
 function el(tagName, fields = invalid as object, children = invalid as object)
     element = createObject("roSGNode", tagName)
 
@@ -48,7 +51,6 @@ function el(tagName, fields = invalid as object, children = invalid as object)
 end function
 
 ' TODO: update to include parent as first arg.
-' TODO: add key to args to maintain item state.
 function list(View as function, key = invalid)
     this = {}
     this.__resg_is_list = true
