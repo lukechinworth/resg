@@ -123,17 +123,8 @@ function list(View as function, key = invalid)
 end function
 
 sub mount(parent as object, child as object, insertIndex = invalid)
-    if (type(parent) = "roAssociativeArray" and parent.el <> invalid)
-        parentEl = parent.el
-    else
-        parentEl = parent
-    end if
-
-    if (type(child) = "roAssociativeArray" and child.el <> invalid)
-        childEl = child.el
-    else
-        childEl = child
-    end if
+    parentEl = getEl(parent)
+    childEl = getEl(child)
 
     if (type(childEl) = "roSGNode")
         if (insertIndex <> invalid)
@@ -153,21 +144,13 @@ sub mount(parent as object, child as object, insertIndex = invalid)
 end sub
 
 sub setChildren(parent, children)
-    if (type(parent) = "roAssociativeArray" and parent.el <> invalid)
-        parentEl = parent.el
-    else
-        parentEl = parent
-    end if
+    parentEl = getEl(parent)
 
     for i = 0 to children.count() - 1
         child = children[i]
         current = parentEl.getChild(i)
 
-        if (type(child) = "roAssociativeArray" and child.el <> invalid)
-            childEl = child.el
-        else
-            childEl = child
-        end if
+        childEl = getEl(child)
 
         if (not childEl.isSameNode(current))
             ' Insert the child at the current index.
@@ -186,3 +169,14 @@ sub setChildren(parent, children)
         nextChild = parentEl.getChild(i)
     end while
 end sub
+
+'
+' Utils.
+'
+function getEl(elementOrComponent)
+    if (type(elementOrComponent) = "roAssociativeArray" and elementOrComponent.el <> invalid)
+        return elementOrComponent.el
+    else
+        return elementOrComponent
+    end if
+end function
