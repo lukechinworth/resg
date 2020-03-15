@@ -70,6 +70,7 @@ function list(View as function, key = invalid)
 
             for i = 0 to datas.count() - 1
                 data = datas[i]
+                ' The id has to be a string for assocarray lookup.
                 id = data[m.key].toStr()
 
                 ' Check if view is in lookup.
@@ -121,7 +122,7 @@ function list(View as function, key = invalid)
     return this
 end function
 
-sub mount(parent as object, child as object, insertIndex = invalid as object)
+sub mount(parent as object, child as object, insertIndex = invalid)
     if (type(parent) = "roAssociativeArray" and parent.el <> invalid)
         parentEl = parent.el
     else
@@ -158,11 +159,9 @@ sub setChildren(parent, children)
         parentEl = parent
     end if
 
-    currentIndex = 0
-    current = parentEl.getChild(currentIndex)
-
     for i = 0 to children.count() - 1
         child = children[i]
+        current = parentEl.getChild(i)
 
         if (type(child) = "roAssociativeArray" and child.el <> invalid)
             childEl = child.el
@@ -172,18 +171,18 @@ sub setChildren(parent, children)
 
         if (not childEl.isSameNode(current))
             ' Insert the child at the current index.
-            mount(parentEl, childEl, currentIndex)
+            mount(parentEl, childEl, i)
         end if
-
-        currentIndex++
-        current = parentEl.getChild(currentIndex)
     end for
 
     ' Remove remaining children from parent.
-    while (current <> invalid)
-        parentEl.removeChild(current)
+    i++
+    nextChild = parentEl.getChild(i)
+
+    while (nextChild <> invalid)
+        parentEl.removeChild(nextChild)
 
         ' Since we just removed, the remaining children will slide back one, so we can get the next at the same index.
-        current = parentEl.getChild(currentIndex)
+        nextChild = parentEl.getChild(i)
     end while
 end sub

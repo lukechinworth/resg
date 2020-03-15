@@ -1,4 +1,8 @@
 sub init()
+    m.SCREEN_WIDTH = 1920
+    m.CARD_WIDTH = 150
+    m.CARD_HEIGHT = 180
+
     m.layoutGoup = el("LayoutGroup")
 
     mount(m.top, m.layoutGoup)
@@ -42,8 +46,10 @@ sub init()
     end for
 
     m.cardList = list(Card, "id")
+    mount(m.layoutGoup, el("Group", { ref: "listContainer" }, m.cardList))
     m.cardList.update(m.cardData)
-    mount(m.layoutGoup, el("Group", { ref: "listContainer", on: { change: "onChangeListContainer" } }, m.cardList))
+
+    gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 
     m.timer = el("Timer")
     m.timer.duration = 1
@@ -57,33 +63,19 @@ sub onFireTimer()
     m.cardData = sortRandom(m.cardData)
     cardDataRandomSlice = slice(m.cardData, 0, rnd(50 - 1))
     m.cardList.update(cardDataRandomSlice)
+    gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 end sub
 
-sub onChangeListContainer(e as object)
-    change = e.getData()
+sub gridifyChildren(parent as object, gridWidth, itemWidth, itemHeight)
+    itemsPerRow = gridWidth \ itemWidth
 
-    newIndex = invalid
+    for i = 0 to parent.getChildCount() - 1
+        child = parent.getChild(i)
+        x = i MOD itemsPerRow
+        y = i \ itemsPerRow
 
-    if (change.operation = "move")
-        newIndex = change.index2
-    else if (change.operation = "add" or change.operation = "insert")
-        newIndex = change.index1
-    end if
-
-    if (newIndex = invalid)
-        return
-    end if
-
-    SCREEN_WIDTH = 1920
-    CARD_WIDTH = 150
-    CARD_HEIGHT = 180
-    cardsPerRow = SCREEN_WIDTH \ CARD_WIDTH
-    x = newIndex MOD cardsPerRow
-    y = newIndex \ cardsPerRow
-
-    listContainer = e.getRoSGNode()
-    child = listContainer.getChild(newIndex)
-    child.translation = [x * CARD_WIDTH, y * CARD_HEIGHT]
+        child.translation = [x * itemWidth, y * itemHeight]
+    end for
 end sub
 
 '
@@ -119,7 +111,10 @@ function Card() as object
     }
 end function
 
-' TODO: add more checks to not get invalid values.
+'
+' Array helper functions.
+'
+' TODO: add more checks to not get invalid values in the returned array.
 function slice(array, begin = 0, endIndex = invalid)
     newArray = []
 
