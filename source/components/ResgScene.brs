@@ -31,18 +31,18 @@ sub init()
         height = 75 + rnd(75)
 
         m.cardData[i] = {
+            id: i,
             img: {
                 width: width,
                 height: height,
                 uri: "https://picsum.photos/" + width.toStr() + "/" + height.toStr()
             },
-            name: "Image " + (i + 1).toStr()
+            name: "Image " + (i + 1).toStr(),
         }
     end for
 
-    m.cardList = list(Card)
+    m.cardList = list(Card, "id")
     m.cardList.update(m.cardData)
-    ' TODO: is there a better way to add/remove field observers?
     mount(m.layoutGoup, el("Group", { ref: "listContainer", on: { change: "onChangeListContainer" } }, m.cardList))
 
     m.timer = el("Timer")
@@ -76,7 +76,7 @@ sub onChangeListContainer(e as object)
 
     SCREEN_WIDTH = 1920
     CARD_WIDTH = 150
-    CARD_HEIGHT = 170
+    CARD_HEIGHT = 180
     cardsPerRow = SCREEN_WIDTH \ CARD_WIDTH
     x = newIndex MOD cardsPerRow
     y = newIndex \ cardsPerRow
@@ -107,6 +107,9 @@ function Card() as object
             return m
         end function,
         update: sub(data)
+            ' These will match if the view is reused.
+            print m.name.text, data.name
+
             m.poster.width = data.img.width
             m.poster.height = data.img.height
             m.poster.uri = data.img.uri

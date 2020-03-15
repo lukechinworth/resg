@@ -21,7 +21,8 @@ function el(tagName, fields = invalid as object, children = invalid as object)
             for i = 0 to items.count() - 1
                 item = items[i]
 
-                ' TODO: see if this works or if we need to observe from context.ref
+                ' TODO: is there a better way to add/remove field observers?
+                ' TODO: maybe attach function here that calls  context["method"]()?
                 element.observeFieldScoped(item.key, item.value)
             end for
         end if
@@ -48,15 +49,48 @@ end function
 
 ' TODO: update to include parent as first arg.
 ' TODO: add key to args to maintain item state.
-function list(View as function)
-    return {
-        __resg_is_list: true,
-        View: View,
-        views: [],
-        update: sub(datas)
-            ' We use a temp views array so that it has the same length as the new data coming in.
-            views = []
+function list(View as function, key = invalid)
+    this = {}
+    this.__resg_is_list = true
+    this.View = View
+    this.views = []
 
+    if (key <> invalid)
+        this.key = key
+        this.lookup = {}
+    end if
+
+    this.update = sub(datas)
+        ' We use a temp views array so that it has the same length as the new data coming in.
+        views = []
+
+        if (m.key <> invalid)
+            oldLookup = m.lookup
+            lookup = {}
+
+            for i = 0 to datas.count() - 1
+                data = datas[i]
+                id = data[m.key].toStr()
+
+                ' Check if view is in lookup.
+                view = oldLookup[id]
+
+                if (view = invalid)
+                    view = m.View().init()
+                end if
+
+                views[i] = view
+                lookup[id] = view
+
+                if (view.update <> invalid)
+                    ' TODO: add other args here.
+                    view.update(data)
+                end if
+            end for
+
+            ' Rest the lookup.
+            m.lookup = lookup
+        else
             for i = 0 to datas.count() - 1
                 data = datas[i]
                 ' Check if view is in local cache.
@@ -73,15 +107,18 @@ function list(View as function)
                     view.update(data)
                 end if
             end for
+        end if
 
-            ' m.parent is set on the list in mount().
-            if (m.parent <> invalid)
-                setChildren(m.parent, views)
-            end if
+        ' Reset the views array.
+        m.views = views
 
-            m.views = views
-        end sub
-    }
+        ' m.parent is set on the list in mount().
+        if (m.parent <> invalid)
+            setChildren(m.parent, m.views)
+        end if
+    end sub
+
+    return this
 end function
 
 sub mount(parent as object, child as object, insertIndex = invalid as object)
