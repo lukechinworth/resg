@@ -7,12 +7,10 @@ sub init()
 
     mount(m.top, m.layoutGoup)
 
-    m.labels = [
+    mount(m.layoutGoup, [
         el("Label", { text: "Hello RE:SG" }),
         el("Label", { text: "Here is a label." }),
-    ]
-
-    mount(m.layoutGoup, m.labels)
+    ])
 
     m.listItems = [
         Li("list item 1"),
@@ -23,7 +21,7 @@ sub init()
     ]
 
     m.listContainer = el("Group", invalid, [
-        el("LayoutGroup", { ref: "list", translation: [20, 0], horizAlignment: "custom" }, m.listItems)
+        el("LayoutGroup", { ref: "list", translation: [20, 0]}, m.listItems)
     ])
 
     mount(m.layoutGoup, m.listContainer)
@@ -60,8 +58,10 @@ sub init()
 end sub
 
 sub onFireTimer()
-    m.cardData = sortRandom(m.cardData)
-    cardDataRandomSlice = slice(m.cardData, 0, rnd(50 - 1))
+    m.cardData = sort(m.cardData, function(item)
+        return rnd(m.cardData.count())
+    end function)
+    cardDataRandomSlice = slice(m.cardData, 0, rnd(m.cardData.count() - 1))
     m.cardList.update(cardDataRandomSlice)
     gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 end sub
@@ -98,6 +98,7 @@ function Card() as object
 
             return m
         end function,
+        ' TODO: update to handle index, and update grid position based on this.
         update: sub(data)
             ' These will match if the view is reused.
             print m.name.text, data.name
@@ -115,38 +116,37 @@ end function
 ' Array helper functions.
 '
 ' TODO: add more checks to not get invalid values in the returned array.
-function slice(array, begin = 0, endIndex = invalid)
+function slice(array, beginIndex = 0, endIndex = invalid)
     newArray = []
 
     if (endIndex = invalid)
         endIndex = array.count() - 1
     end if
 
-    for i = begin to endIndex
+    for i = beginIndex to endIndex
         newArray[i] = array[i]
     end for
 
     return newArray
 end function
 
-function sortRandom(array)
-    itemsWithRandomNumber = []
+function sort(array, sortKeyFunction = invalid)
+    itemsWithSortKey = []
     count = array.count()
 
     for i = 0 to count - 1
-        itemsWithRandomNumber.push({
-            sortKey: rnd(count),
-            i: i
-            items: array[i],
+        itemsWithSortKey.push({
+            i: i,
+            sortKey: sortKeyFunction(array[i]),
         })
     end for
 
-    itemsWithRandomNumber.sortBy("sortKey")
+    itemsWithSortKey.sortBy("sortKey")
 
     newArray = []
 
     for i = 0 to count - 1
-        newArray.push(array[itemsWithRandomNumber[i].i])
+        newArray.push(array[itemsWithSortKey[i].i])
     end for
 
     return newArray
