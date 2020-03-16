@@ -79,7 +79,13 @@ function list(View as function, key = invalid)
                 view = oldLookup[id]
 
                 if (view = invalid)
-                    view = m.View().init()
+                    view = m.View()
+
+                    ' Some views need access to the view context when creating el, so el is defined within an init function.
+                    ' So if we don't have el, call init.
+                    if (view.el = invalid)
+                        view.init()
+                    end if
                 end if
 
                 views[i] = view
@@ -91,7 +97,7 @@ function list(View as function, key = invalid)
                 end if
             end for
 
-            ' Rest the lookup.
+            ' Update the lookup cache with the new lookup.
             m.lookup = lookup
         else
             for i = 0 to datas.count() - 1
@@ -100,7 +106,11 @@ function list(View as function, key = invalid)
                 view = m.views[i]
 
                 if (view = invalid)
-                    view = m.View().init()
+                    view = m.View()
+
+                    if (view.el = invalid)
+                        view.init()
+                    end if
                 end if
 
                 views[i] = view

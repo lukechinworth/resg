@@ -46,7 +46,6 @@ sub init()
     m.cardList = list(Card, "id")
     mount(m.layoutGoup, el("Group", { ref: "listContainer" }, m.cardList))
     m.cardList.update(m.cardData)
-
     gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 
     m.timer = el("Timer")
