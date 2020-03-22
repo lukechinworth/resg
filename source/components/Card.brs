@@ -1,6 +1,5 @@
 sub init()
     mount(m.top, [
-        ' TODO: update ref to id.
         el("Poster", { id: "poster",}),
         el("Label", { id: "name"})
     ])

@@ -12,7 +12,7 @@ sub init()
         el("Label", { text: "Here is a label." }),
     ])
 
-    m.listItems = [
+    m.listData = [
         "list item 1",
         "list item 2",
         "list item 3",
@@ -20,11 +20,12 @@ sub init()
         "list item 5",
     ]
 
-    m.list = list("Li")
-    m.list.update(m.listItems)
     m.listContainer = el("Group", invalid, [
-        el("LayoutGroup", {translation: [20, 0]}, m.list)
+        el("LayoutGroup", {translation: [20, 0]}, [
+            el("List", {id: "list", listItemNodeType: "Li"})
+        ])
     ])
+    m.list.callFunc("update", m.listData)
 
     mount(m.layoutGoup, m.listContainer)
 
@@ -45,10 +46,11 @@ sub init()
         }
     end for
 
-    m.cardList = list("Card", "id")
-    mount(m.layoutGoup, el("Group", { id: "cardListContainer" }, m.cardList))
-    m.cardList.update(m.cardData)
-    gridifyChildren(m.cardListContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
+    mount(m.layoutGoup, el("Group", invalid, [
+        el("List", {id:"cardList", listItemNodeType: "Card", key: "id"})
+    ]))
+    m.cardList.callFunc("update", m.cardData)
+    gridifyChildren(m.cardList, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 
     m.timer = el("Timer")
     m.timer.duration = 1
@@ -63,8 +65,8 @@ sub onFireTimer()
         return rnd(m.cardData.count())
     end function)
     cardDataRandomSlice = slice(m.cardData, 0, rnd(m.cardData.count() - 1))
-    m.cardList.update(cardDataRandomSlice)
-    gridifyChildren(m.cardListContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
+    m.cardList.callFunc("update", cardDataRandomSlice)
+    gridifyChildren(m.cardList, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 end sub
 
 sub gridifyChildren(parent as object, gridWidth, itemWidth, itemHeight)

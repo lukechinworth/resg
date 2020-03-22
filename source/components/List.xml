@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- TODO: how can we allow user to specify what component to extend for list? -->
+<component name="List" extends="Group">
+  <script type="text/brightscript" uri="List.brs"/>
+  <script type="text/brightscript" uri="pkg:/source/resg.brs"/>
+  <interface>
+    <field id="listItemNodeType" type="string"/>
+    <field id="key" type="string"/>
+    <function name="update"/>
+  </interface>
+</component>
