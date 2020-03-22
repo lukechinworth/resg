@@ -1,38 +1,14 @@
 '
 ' Core functions: el, list, mount, setChildren
 '
-function el(tagName, fields = invalid as object, children = invalid as object)
-    element = createObject("roSGNode", tagName)
+function el(nodeType, fields = invalid as object, children = invalid as object)
+    element = createObject("roSGNode", nodeType)
 
     if (fields <> invalid)
-        ' Use the passed in context, defaulting to calling context.
-        if (fields.context <> invalid)
-            context = fields.context
-        else
-            context = m
+        ' Add nodes to component context m, keyed by id.
+        if (fields.id <> invalid)
+            m[fields.id] = element
         end if
-
-        ' Handle ref field, which makes element available to context.
-        if (fields.ref <> invalid)
-            context[fields.ref] = element
-        end if
-
-        ' Handle on field, which adds event listeners.
-        if (fields.on <> invalid)
-            items = fields.on.items()
-
-            for i = 0 to items.count() - 1
-                item = items[i]
-
-                ' TODO: is there a better way to add/remove field observers?
-                ' TODO: maybe attach function here that calls  context["method"]()?
-                element.observeFieldScoped(item.key, item.value)
-            end for
-        end if
-
-        fields.delete("on")
-        fields.delete("ref")
-        fields.delete("context")
 
         element.setFields(fields)
     end if
@@ -50,11 +26,12 @@ function el(tagName, fields = invalid as object, children = invalid as object)
     return element
 end function
 
+' TODO: maybe make this a sg component too, for consistency.
 ' TODO: update to include parent as first arg.
-function list(View as function, key = invalid)
+function list(nodeType as string, key = invalid)
     this = {}
     this.__resg_is_list = true
-    this.View = View
+    this.nodeType = nodeType
     this.views = []
 
     if (key <> invalid)
@@ -79,22 +56,15 @@ function list(View as function, key = invalid)
                 view = oldLookup[id]
 
                 if (view = invalid)
-                    view = m.View()
-
-                    ' Some views need access to the view context when creating el, so el is defined within an init function.
-                    ' So if we don't have el, call init.
-                    if (view.el = invalid)
-                        view.init()
-                    end if
+                    view = el(m.nodeType)
                 end if
 
                 views[i] = view
                 lookup[id] = view
 
-                if (view.update <> invalid)
-                    ' TODO: add other args here.
-                    view.update(data)
-                end if
+                ' There is no way to check if the component has an update function,
+                ' but if it doesn't the program doesn't crash, we just get a warning in the console.
+                view.callFunc("update", data)
             end for
 
             ' Update the lookup cache with the new lookup.
@@ -106,19 +76,12 @@ function list(View as function, key = invalid)
                 view = m.views[i]
 
                 if (view = invalid)
-                    view = m.View()
-
-                    if (view.el = invalid)
-                        view.init()
-                    end if
+                    view = el(m.nodeType)
                 end if
 
                 views[i] = view
 
-                if (view.update <> invalid)
-                    ' TODO: add other args here.
-                    view.update(data)
-                end if
+                view.callFunc("update", data)
             end for
         end if
 
@@ -135,60 +98,42 @@ function list(View as function, key = invalid)
 end function
 
 sub mount(parent as object, child as object, insertIndex = invalid)
-    parentEl = getEl(parent)
-    childEl = getEl(child)
-
-    if (type(childEl) = "roSGNode")
+    if (type(child) = "roSGNode")
         if (insertIndex <> invalid)
-            parentEl.insertChild(childEl, insertIndex)
+            parent.insertChild(child, insertIndex)
         else
-            parentEl.appendChild(childEl)
+            parent.appendChild(child)
         end if
-    else if (type(childEl) = "roArray")
-        for i = 0 to childEl.count() - 1
-            mount(parentEl, childEl[i])
+    else if (type(child) = "roArray")
+        for i = 0 to child.count() - 1
+            mount(parent, child[i])
         end for
-    else if (childEl.__resg_is_list)
+    else if (child.__resg_is_list)
         ' TODO: update when we add parent to list args.
-        childEl.parent = parentEl
-        mount(parentEl, childEl.views)
+        child.parent = parent
+        mount(parent, child.views)
     end if
 end sub
 
 sub setChildren(parent, children)
-    parentEl = getEl(parent)
-
     for i = 0 to children.count() - 1
         child = children[i]
-        current = parentEl.getChild(i)
+        current = parent.getChild(i)
 
-        childEl = getEl(child)
-
-        if (not childEl.isSameNode(current))
+        if (not child.isSameNode(current))
             ' Insert the child at the current index.
-            mount(parentEl, childEl, i)
+            mount(parent, child, i)
         end if
     end for
 
     ' Remove remaining children from parent.
     i++
-    nextChild = parentEl.getChild(i)
+    nextChild = parent.getChild(i)
 
     while (nextChild <> invalid)
-        parentEl.removeChild(nextChild)
+        parent.removeChild(nextChild)
 
         ' Since we just removed, the remaining children will slide back one, so we can get the next at the same index.
-        nextChild = parentEl.getChild(i)
+        nextChild = parent.getChild(i)
     end while
 end sub
-
-'
-' Utils.
-'
-function getEl(elementOrComponent)
-    if (type(elementOrComponent) = "roAssociativeArray" and elementOrComponent.el <> invalid)
-        return elementOrComponent.el
-    else
-        return elementOrComponent
-    end if
-end function

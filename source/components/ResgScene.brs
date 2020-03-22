@@ -13,15 +13,17 @@ sub init()
     ])
 
     m.listItems = [
-        Li("list item 1"),
-        Li("list item 2"),
-        Li("list item 3"),
-        Li("list item 4"),
-        Li("list item 5")
+        "list item 1",
+        "list item 2",
+        "list item 3",
+        "list item 4",
+        "list item 5",
     ]
 
+    m.list = list("Li")
+    m.list.update(m.listItems)
     m.listContainer = el("Group", invalid, [
-        el("LayoutGroup", { ref: "list", translation: [20, 0]}, m.listItems)
+        el("LayoutGroup", {translation: [20, 0]}, m.list)
     ])
 
     mount(m.layoutGoup, m.listContainer)
@@ -43,10 +45,10 @@ sub init()
         }
     end for
 
-    m.cardList = list(Card, "id")
-    mount(m.layoutGoup, el("Group", { ref: "listContainer" }, m.cardList))
+    m.cardList = list("Card", "id")
+    mount(m.layoutGoup, el("Group", { id: "cardListContainer" }, m.cardList))
     m.cardList.update(m.cardData)
-    gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
+    gridifyChildren(m.cardListContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 
     m.timer = el("Timer")
     m.timer.duration = 1
@@ -62,7 +64,7 @@ sub onFireTimer()
     end function)
     cardDataRandomSlice = slice(m.cardData, 0, rnd(m.cardData.count() - 1))
     m.cardList.update(cardDataRandomSlice)
-    gridifyChildren(m.listContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
+    gridifyChildren(m.cardListContainer, m.SCREEN_WIDTH, m.CARD_WIDTH, m.CARD_HEIGHT)
 end sub
 
 sub gridifyChildren(parent as object, gridWidth, itemWidth, itemHeight)
@@ -76,40 +78,6 @@ sub gridifyChildren(parent as object, gridWidth, itemWidth, itemHeight)
         child.translation = [x * itemWidth, y * itemHeight]
     end for
 end sub
-
-'
-' Components
-'
-function Li(data) as object
-    return {
-        el: el("Label", { text: "* " + data })
-    }
-end function
-
-function Card() as object
-    return {
-        ' We use init to gain access to the context m.
-        init: function()
-            m.el = el("LayoutGroup", invalid, [
-                el("Poster", { ref: "poster", context: m }),
-                el("Label", { ref: "name", context: m })
-            ])
-
-            return m
-        end function,
-        ' TODO: update to handle index, and update grid position based on this.
-        update: sub(data)
-            ' These will match if the view is reused.
-            print m.name.text, data.name
-
-            m.poster.width = data.img.width
-            m.poster.height = data.img.height
-            m.poster.uri = data.img.uri
-
-            m.name.text = data.name
-        end sub,
-    }
-end function
 
 '
 ' Array helper functions.

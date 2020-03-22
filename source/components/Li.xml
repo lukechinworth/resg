@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Li" extends="Label">
+  <script type="text/brightscript" uri="Li.brs"/>
+  <script type="text/brightscript" uri="pkg:/source/resg.brs"/>
+  <interface>
+    <function name="update"/>
+  </interface>
+</component>
